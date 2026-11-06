@@ -21,6 +21,17 @@ const INITIAL: Country[] = [
 const PLAYERS = INITIAL.map(c=>c.code);
 const MY_CODE = "ZA";
 
+const PERSONALITY_MAP: any = {
+  'USA': 'Aggressive', 'Brazil': 'Aggressive', 'Nigeria': 'Aggressive',
+  'Vatican City': 'Defensive', 'Lesotho': 'Defensive', 'Iceland': 'Defensive',
+  'China': 'Opportunist', 'India': 'Opportunist', 'Germany': 'Opportunist',
+};
+const getPersonality = (name: string) => {
+  return PERSONALITY_MAP[name] || 'Opportunist';
+};
+const difficulty = 'Normal';
+
+
 
 
 function genAICommentary(att: Country, def: Country, attDice: number[], defDice: number[], attLoss: number, defLoss: number) {
@@ -136,13 +147,18 @@ const [game, setGame] = useState(() => {
 const runNpcTurn = (npcCode: string, board: any[]) => {
   let newBoard = [...board.map(c => ({...c}))];
   let npcLog: string[] = [];
+  const npcName = newBoard.find((c: any) => c.owner === npcCode)?.name || '';
+const personality = getPersonality(npcName);
+const attackBonus = personality === 'Aggressive' ? 2 : personality === 'Defensive' ? 0 : 1;
+
 
   // 1. REINFORCEMENTS: put them where they are weakest but can attack
   const myCountries = newBoard.filter(c => c.owner === npcCode);
   const myCount = myCountries.length;
   if (myCount === 0) return { board: newBoard, log: npcLog };
   
-  const pool = Math.max(2, myCount * 2);
+  const pool = Math.max(2, myCount * 2) + attackBonus;
+
   // Find my country with most enemy neighbours that are weaker than me
   let bestReinforce = myCountries[0];
   let bestScore = -999;
@@ -321,6 +337,7 @@ const runNpcTurn = (npcCode: string, board: any[]) => {
             <div className="font-bold text-[11px] mt-1">{c.name}</div>
             <div className="font-extrabold text-lg">{c.soldiers} soldiers</div>
             <div className="text-[10px] opacity-80">Base {c.base} | {c.owner}</div>
+            <div className="text-[10px]">{getPersonality(c.name) === 'Aggressive' ? '🔴 Aggressive' : getPersonality(c.name) === 'Defensive' ? '🛡️ Defensive' : '🎲 Opportunist'}</div>
           </div>
         ))}
       </div>
