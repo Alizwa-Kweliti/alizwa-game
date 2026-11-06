@@ -30,6 +30,9 @@ function genAICommentary(att: Country, def: Country, attDice: number[], defDice:
 }
 
 export default function Page(){
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   // --- VISITOR vs PLAYER ---
 const [user, setUser] = useState<any>(null);
 const [usernameInput, setUsernameInput] = useState("");
@@ -256,11 +259,16 @@ const runNpcTurn = (npcCode: string, board: any[]) => {
     setGame(newGame); setReinforcePool(null); setAlloc({});
   };
 
+   if (!mounted) {
+    return <div style={{ padding: 20 }}>Loading your game, Alizwa... 👑</div>;
+  }
+
+
   return (
-    <div className="min-h-screen bg-[#0f1f4d] text-white p-2">
-      {!user ? (
+   <div className="min-h-screen bg-slate-900 text-white p-2">
+  {!user ? (
   <div style={{background:'#d4edda', color: 'black' ,padding:12, borderRadius:8, marginBottom:12}}>
-    👀 You are viewing as a VISITOR - you can watch the game, but you can't play.
+    👀 You are viewing as a VISITOR - you can watch the game, but you cannot play.
     <button onClick={()=>setShowLogin(true)} style={{marginLeft:8}}>Sign Up / Log In to Play Your Own Game</button>
   </div>
 ) : (
@@ -306,9 +314,9 @@ const runNpcTurn = (npcCode: string, board: any[]) => {
 
       {conquer && <div className="bg-green-700 p-2 rounded mb-2">CONQUERED {conquer.to} - Reward {conquer.reward} <button onClick={confirmConquest} className="bg-white text-black px-2 rounded ml-2">Confirm Transfer</button></div>}
 
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+      <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'8px', marginTop:'8px'}}>
         {game.map(c=>(
-          <div key={c.code} onClick={()=>handleCountryClick(c.code)} className={`p-2 rounded cursor-pointer border-2 text-center ${c.owner===MY_CODE? "bg-green-800 border-green-400": "bg-blue-900 border-blue-700"} ${selectedAtt===c.code? "ring-4 ring-yellow-400": ""}`}>
+          <div key={c.code} onClick={()=>handleCountryClick(c.code)} style={{background: c.owner==='ZA' ? '#1e40af' : '#1f2937', border: c.owner==='ZA' ? '3px solid #facc15' : '1px solid #475569', borderRadius:'12px', padding:'10px', textAlign:'center', cursor:'pointer', color:'white'}}>
             <img src={c.flagImg} alt={c.name} className="w-12 h-8 object-cover mx-auto rounded shadow" />
             <div className="font-bold text-[11px] mt-1">{c.name}</div>
             <div className="font-extrabold text-lg">{c.soldiers} soldiers</div>
