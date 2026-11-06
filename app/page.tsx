@@ -1,5 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react';
+import { db } from "./firebase";
+import { collection, addDoc, getDocs, query, orderBy, limit } from "firebase/firestore";
 
 type Country = { code: string; name: string; soldiers: number; base: number; owner: string; flag: string; flagImg: string }
 
@@ -48,6 +50,34 @@ export default function Page(){
 const [user, setUser] = useState<any>(null);
 const [usernameInput, setUsernameInput] = useState("");
 const [showLogin, setShowLogin] = useState(false);
+  // --- FIREBASE LEADERBOARD ---
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+
+  async function saveScore(finalScore: number) {
+    try {
+      const nameToSave = user?.username || usernameInput || "Alizwa";
+      await addDoc(collection(db, "scores"), {
+        name: nameToSave,
+        score: finalScore,
+        createdAt: new Date(),
+      });
+      loadLeaderboard();
+    } catch (e) {
+      console.log("save failed", e);
+    }
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(10));
+      const snap = await getDocs(q);
+      setLeaderboard(snap.docs.map(d => d.data()));
+    } catch (e) {
+      console.log("load failed", e);
+    }
+  }
+   useEffect(() => { loadLeaderboard(); }, []);
+
 
 // Check if someone is logged in when page loads
 useEffect(() => {
@@ -345,6 +375,29 @@ const attackBonus = personality === 'Aggressive' ? 2 : personality === 'Defensiv
       <div className="flex gap-2 mt-3">
         <button onClick={nextTurn} className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold px-5 py-2.5 rounded-full shadow-lg shadow-fuchsia-500/30 hover:scale-105 active:scale-95 transition-all">Skip Turn Round {round}</button>
         <div className="text-xs bg-black/30 p-1 rounded max-h-20 overflow-auto w-80">{log.map((l,i)=><div key={i}>{l}</div>)}</div>
+      </div>
+            {/* --- LEADERBOARD --- */}
+      <div className="mt-4 p-4 bg-black/30 rounded">
+        <h2 className="font-bold text-lg">🏆 Top 10 Leaderboard</h2>
+        <button
+    onClick={() => {
+  const myCount = game.filter((c: any) => c.owner === "ZA").length;
+  saveScore(myCount);
+  alert("Saved! You own " + myCount + " countries");
+}}
+
+          className="bg-yellow-500 text-black px-4 py-2 rounded font-bold mt-2"
+        >
+          Save My Score
+        </button>
+        <div className="mt-3">
+          {leaderboard.map((entry: any, i: number) => (
+            <div key={i} className="flex justify-between">
+              <span>{i + 1}. {entry.name}</span>
+              <span>{entry.score} countries</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
